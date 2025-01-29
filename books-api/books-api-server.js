@@ -1,5 +1,5 @@
 import express from 'express';
-import fs from 'fs';
+// import fs from 'fs';
 import http from 'http';
 // import https from 'https';
 import BooksAPIApp from './books-api-app.js';
@@ -10,7 +10,7 @@ import cors from 'cors';
 // const credentials = {key: privateKey, cert: certificate};
 
 const expressApp = express();
-const allowlist = ['http://localhost']
+const allowlist = ['http://localhost:4200']
 
 function corsOptionsDelegate(req, callback) {
     if (allowlist.indexOf(req.header('Origin')) >= 0) {
