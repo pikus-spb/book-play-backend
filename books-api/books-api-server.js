@@ -10,7 +10,7 @@ import cors from 'cors';
 // const credentials = {key: privateKey, cert: certificate};
 
 const expressApp = express();
-const allowlist = ['http://localhost:4200']
+const allowlist = ['http://localhost:4200', 'http://192.168.31.200, 'https://book-play.ru']
 
 function corsOptionsDelegate(req, callback) {
     if (allowlist.indexOf(req.header('Origin')) >= 0) {

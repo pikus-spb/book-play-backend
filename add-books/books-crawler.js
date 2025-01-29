@@ -38,11 +38,15 @@ function crawl(dir, done) {
 }
 
 function getFileEncoding(file) {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     fs.readFile(file, null, (err, data) => {
       if (!err) {
-        const encoding = data.toString().match(/encoding="([^"]+)"/)[1].toLowerCase();
-        resolve(encoding);
+        try {
+          const encoding = data.toString().match(/encoding="([^"]+)"/)[1].toLowerCase();
+          resolve(encoding);
+        } catch (e) {
+          reject(e);
+        }
       } else {
         console.log(err);
       }
@@ -59,7 +63,6 @@ function getBookLogo(data) {
   const DOMParser = dom.window.DOMParser;
   const parser = new DOMParser();
   const document = parser.parseFromString(data, "text/xml");
-
   const imageElement = document.querySelector('coverpage image');
   if (imageElement != null) {
     const srcAttribute = Array.from(imageElement.attributes)
@@ -79,6 +82,7 @@ function getBookLogo(data) {
       }
     }
   }
+
   return null;
 }
 
@@ -110,9 +114,11 @@ function readFile(file, encoding) {
 
         if (authorFirstName && authorFirstName.length > 1 && authorLastName && authorLastName.length > 1 && title && title.length > 1) {
           resolve({authorFirstName, authorLastName, title, logo, document});
+        } else {
+          reject('Cannot add book: '+ title);
         }
       } else {
-        console.log(err);
+        reject('Error: '+ err.toString());
       }
     });
   });
@@ -124,27 +130,28 @@ function getBase64ImageData(logo) {
 
 function addToDataBase(bookData) {
   console.log('Adding to database: ' + bookData.title);
-  return new Promise((resolve, reject) => {
-    const {authorFirstName, authorLastName, title, logo, content} = bookData;
-    pool.query(
-      'INSERT INTO books (authorFirstName, authorLastName, title, bookFullName, logo, content) VALUES (?, ?, ?, ?, ?, ?)',
-      [authorFirstName, authorLastName, title, `${authorFirstName} ${authorLastName} - ${title}`, getBase64ImageData(logo), content],
-      err => {
-        if (err) {
-          console.error(err);
-          reject(err);
-        }
-        resolve(`${authorFirstName} ${authorLastName} - ${title}`);
-      }
-    );
-  });
+    return new Promise((resolve, reject) => {
+      const {authorFirstName, authorLastName, title, logo, content} = bookData;
+        pool.query(
+            'INSERT INTO books (authorFirstName, authorLastName, title, bookFullName, logo, content) VALUES (?, ?, ?, ?, ?, ?)',
+            [authorFirstName, authorLastName, title, `${authorFirstName} ${authorLastName} - ${title}`, getBase64ImageData(logo), content],
+            (err, rows) => {
+              if (err) {
+                resolve('(not added)');
+              } else {
+                resolve(`${authorFirstName} ${authorLastName} - ${title}`);
+              }
+            }
+        );
+    });
 }
 
 function cleanCopyrights(text) {
   const content = text.replace(/(<([^>]+)>)/gi, "").trim();
-  if (content.indexOf('©') >= 0 ||
-      content.indexOf('создание fb2') >= 0 ||
-      content.indexOf('Все права защищены') >= 0 ||
+  if (content.startsWith('©') ||
+      content.match(/авторские права/gi) ||
+      content.match(/создание fb2/gi) ||
+      content.match(/Все права защищены/gi) ||
       content.match(/litres|литрес/gi)) {
     return null;
   }
@@ -189,11 +196,17 @@ function simplifyFb2(bookData) {
 
 async function parseBooks(results) {
   for (let file of results) {
-    const encoding =  await getFileEncoding(file);
-    const bookData = await readFile(file, encoding);
-    bookData.content = cleanup(simplifyFb2(bookData));
-    const bookName = await addToDataBase(bookData);
-    console.log('Added: ' + bookName);
+    try {
+      const encoding = await getFileEncoding(file);
+      const bookData = await readFile(file, encoding);
+      bookData.content = cleanup(simplifyFb2(bookData));
+      const bookName = await (addToDataBase(bookData));
+      if (bookName) {
+        console.log('Added: ' + bookName);
+      }
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   return Promise.resolve('All Done!');
