@@ -137,7 +137,7 @@ function addToDataBase(bookData) {
             [authorFirstName, authorLastName, title, `${authorFirstName} ${authorLastName} - ${title}`, getBase64ImageData(logo), content],
             (err, rows) => {
               if (err) {
-                resolve('(not added)');
+                resolve('(skipped because of an error)');
               } else {
                 resolve(`${authorFirstName} ${authorLastName} - ${title}`);
               }
