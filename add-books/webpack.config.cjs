@@ -1,10 +1,10 @@
 const webpack = require("webpack");
 module.exports = {
     entry: {
-        server: './books-crawler.js',
+        server: './add-books.mjs',
     },
     output: {
-        filename: 'books-crawler.cjs',
+        filename: 'add-books.cjs',
         path: __dirname + '/dist'
     },
     target: 'node',

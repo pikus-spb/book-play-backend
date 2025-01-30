@@ -1,1 +1,5 @@
 /.idea/
+/add-books/node_modules/
+/add-books/.idea/
+/add-books/dist/
+
