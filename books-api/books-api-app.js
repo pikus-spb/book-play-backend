@@ -1,10 +1,12 @@
 import mysql from "mysql2";
 import { DB_CONFIG } from './db-config.js';
 
+import { getAuthorName } from './utils.js'
+
 const pool = mysql.createPool(DB_CONFIG);
 
 export default class BooksAPIApp {
-    getAll() {
+    all() {
         return new Promise(resolve => {
             pool.query('SELECT id, authorFirstName, authorLastName, title, bookFullName FROM books ORDER BY bookFullName ASC', (err, result) => {
                 if (err) {
@@ -15,17 +17,48 @@ export default class BooksAPIApp {
             });
         });
     }
-    getByAuthorFirstLetter(letter) {
+
+    groupedByAuthor() {
         return new Promise(resolve => {
-                pool.query(`SELECT id, authorFirstName, authorLastName, title, bookFullName, logo FROM books WHERE authorLastName LIKE '${letter}%'`, (err, result) => {
+            pool.query('SELECT id, authorFirstName, authorLastName, title, bookFullName FROM books', (err, result) => {
                 if (err) {
                     console.error(err);
                 }
-                resolve(result);
+
+                resolve([ ...result].reduce((memo, row) => {
+                    const author = getAuthorName(row);
+                    if (!memo[author]) {
+                        memo[author] = [];
+                    }
+                    memo[author].push(row);
+
+                    return memo;
+                }, {}));
+
+                  // TODO: sort by book name?
+                  //  .map(data => {
+                  // (data).forEach(name => {
+                  //     data[name] = data[name].sort((a, b) => {
+                  //         return a.bookFullName.localeCompare(b.bookFullName);
+                  //     })
+                  // });
+
             });
         });
     }
-    async getAuthorLetters() {
+
+    byId(id) {
+        return new Promise(resolve => {
+            pool.query(`SELECT bookFullName, content FROM books WHERE id = ${id}`, (err, result) => {
+                if (err) {
+                    console.error(err);
+                }
+                resolve(result[0]);
+            });
+        });
+    }
+
+    async authorLetters() {
         const letters = `а,б,в,г,д,е,ж,з,и,к,л,м,н,о,п,р,с,т,у,ф,х,ц,ч,ш,щ,э,ю,я`.split(',');
         const responseResult = [];
 
@@ -48,19 +81,10 @@ export default class BooksAPIApp {
 
         return responseResult;
     }
-    getById(id) {
+
+    search(pattern) {
         return new Promise(resolve => {
-            pool.query(`SELECT bookFullName, content FROM books WHERE id = ${id}`, (err, result) => {
-                if (err) {
-                    console.error(err);
-                }
-                resolve(result[0]);
-            });
-        });
-    }
-    getByFullName(bookFullName) {
-        return new Promise(resolve => {
-            pool.query(`SELECT * FROM books WHERE bookFullName = "${bookFullName}" ORDER BY bookFullName ASC`, (err, result) => {
+            pool.query(`SELECT id, authorFirstName, authorLastName, title, bookFullName FROM books WHERE bookFullName LIKE '%${pattern}%'`, (err, result) => {
                 if (err) {
                     console.error(err);
                 }

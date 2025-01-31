@@ -10,7 +10,7 @@ import cors from 'cors';
 // const credentials = {key: privateKey, cert: certificate};
 
 const expressApp = express();
-const allowlist = ['http://localhost:4200', 'http://192.168.31.200, 'https://book-play.ru']
+const allowlist = ['http://localhost:4200', 'http://192.168.31.200', 'https://book-play.ru']
 
 function corsOptionsDelegate(req, callback) {
     if (allowlist.indexOf(req.header('Origin')) >= 0) {
@@ -34,39 +34,43 @@ httpServer.listen(HTTP_APP_PORT, () => {
 //     console.log(`Web server is listening on port ${HTTPS_APP_PORT}`);
 // });
 
-expressApp.get('/get-all', cors(corsOptionsDelegate), (req, res) => {
-    app.getAll().then(books => {
+expressApp.get('/book/all', cors(corsOptionsDelegate), (req, res) => {
+    app.all().then(books => {
         res.json(books);
     }).catch(err => {
         res.json(err);
     });
 });
-expressApp.get('/get-authors-by-letter/:letter', cors(corsOptionsDelegate), (req, res) => {
-    const letter = req.params.letter;
-    app.getByAuthorFirstLetter(letter).then(books => {
+
+expressApp.get('/book/all/grouped-by-author', cors(corsOptionsDelegate), (req, res) => {
+    app.groupedByAuthor().then(books => {
         res.json(books);
     }).catch(err => {
         res.json(err);
     });
 });
-expressApp.get('/get-author-letters', cors(corsOptionsDelegate), (req, res) => {
-    app.getAuthorLetters().then(letters => {
-        res.json(letters);
-    }).catch(err => {
-        res.json(err);
-    });
-});
-expressApp.get('/get-by-id/:id', cors(corsOptionsDelegate), (req, res) => {
+
+expressApp.get('/book/:id', cors(corsOptionsDelegate), (req, res) => {
     const id = req.params.id;
-    app.getById(id).then(book => {
+    app.byId(id).then(book => {
         res.json(book);
     }).catch(err => {
         res.json(err);
     });
 });
-expressApp.get('/get-by-full-name/:name', cors(corsOptionsDelegate), (req, res) => {
-    const name = req.params.name;
-    app.getByFullName(name).then(books => {
+
+
+expressApp.get('/book/author/first-letter/list', cors(corsOptionsDelegate), (req, res) => {
+    app.authorLetters().then(letters => {
+        res.json(letters);
+    }).catch(err => {
+        res.json(err);
+    });
+});
+
+expressApp.get('/book/name/like/:pattern', cors(corsOptionsDelegate), (req, res) => {
+    const search = req.params.pattern;
+    app.search(search).then(books => {
         res.json(books);
     }).catch(err => {
         res.json(err);
