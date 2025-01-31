@@ -4,9 +4,9 @@ import { fileURLToPath } from 'url';
 import mysql from "mysql2";
 
 import { DB_CONFIG } from './db-config.js';
-import { CleanUtils } from './clean-utils.js'
-import { ParseUtils } from './parse-utils.mjs'
-import { DbUtils } from './db-utils.js'
+import * as clean from './clean-utils.js'
+import * as parse from './parse-utils.mjs'
+import * as db from './db-utils.js'
 
 const __dirname = path.resolve();
 
@@ -54,9 +54,6 @@ class AddBooks {
   }
 
   async parseFiles(results) {
-    const parse = new ParseUtils();
-    const clean = new CleanUtils();
-    const db = new DbUtils();
     const pool = mysql.createPool(DB_CONFIG);
 
     for (let file of results) {
