@@ -3,7 +3,11 @@ export const getAuthorName = (data) => {
 };
 
 const cleanup = (text) => {
-  return fixCapitalizedLetters(trimSpaces(text));
+  return fixCapitalizedLetters(trimSpaces(stripTags(text)));
+};
+
+const stripTags = (text) => {
+  return text.replace(/<[^>]*>/g, '');
 };
 
 const fixCapitalizedLetters = (text) => {
